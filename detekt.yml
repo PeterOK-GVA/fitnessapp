@@ -1,0 +1,46 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 8
+  LongMethod:
+    threshold: 80
+  TooManyFunctions:
+    thresholdInClasses: 20
+  CyclomaticComplexMethod:
+    threshold: 20
+
+style:
+  MagicNumber:
+    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**']
+    ignoreNumbers: ['-1', '0', '1', '2', '100']
+  MaxLineLength:
+    maxLineLength: 140
+  ReturnCount:
+    max: 4
+  WildcardImport:
+    excludes: ['**/test/**']
+  UnusedPrivateMember:
+    active: true
+    allowedNames: '(_|ignored|expected|serialVersionUID)'
+
+formatting:
+  active: true
+  android: true
+  autoCorrect: true
+  Indentation:
+    indentSize: 4
+  MaximumLineLength:
+    maxLineLength: 140
+  TrailingCommaOnCallSite:
+    active: true
+    useTrailingCommaOnCallSite: true
+  TrailingCommaOnDeclarationSite:
+    active: true
+    useTrailingCommaOnDeclarationSite: true

@@ -1,0 +1,5 @@
+# Copy to local.properties (gitignored).
+# sdk.dir is auto-populated by Android Studio when you open the project.
+
+# Phase 4 — Drive backup OAuth (set when implementing Drive integration):
+# google.oauth.client.id=YOUR_CLIENT_ID.apps.googleusercontent.com

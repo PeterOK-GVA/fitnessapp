@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Local config (never commit secrets / SDK paths)
+local.properties
+*.keystore
+*.jks
+keystore.properties
+
+# Android logs and tooling
+captures/
+.cxx/
+*.log
+
+# Generated
+generated/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Drive desktop temp files
+.tmp.driveupload
+.tmp.drivedownload
