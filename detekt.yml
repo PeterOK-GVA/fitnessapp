@@ -9,12 +9,15 @@ complexity:
   LongParameterList:
     functionThreshold: 8
     constructorThreshold: 8
+    ignoreAnnotated: ['Composable']
   LongMethod:
     threshold: 80
+    ignoreAnnotated: ['Composable']
   TooManyFunctions:
     thresholdInClasses: 20
   CyclomaticComplexMethod:
     threshold: 20
+    ignoreAnnotated: ['Composable']
 
 naming:
   FunctionNaming:
