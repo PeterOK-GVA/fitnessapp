@@ -35,15 +35,32 @@ fun HelloScreen(state: HelloUiState, onTap: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = state.greeting,
+            text = "Phase 1.1 — data layer",
             style = MaterialTheme.typography.headlineMedium,
+        )
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = "Exercises in catalogue: ${state.exerciseCount}",
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+            text = "Bar: ${state.barKg} kg",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = if (state.plateDenominationsKg.isEmpty()) {
+                "Plates: none configured"
+            } else {
+                "Plates: ${state.plateDenominationsKg.joinToString(", ") { "$it kg" }}"
+            },
+            style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(24.dp))
         Text(
             text = "Taps: ${state.tapCount}",
             style = MaterialTheme.typography.bodyLarge,
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
         Button(onClick = onTap) {
             Text("Tap me")
         }
@@ -54,6 +71,14 @@ fun HelloScreen(state: HelloUiState, onTap: () -> Unit) {
 @Composable
 private fun HelloScreenPreview() {
     FitnessTheme {
-        HelloScreen(state = HelloUiState(tapCount = 3), onTap = {})
+        HelloScreen(
+            state = HelloUiState(
+                tapCount = 3,
+                exerciseCount = 15,
+                plateDenominationsKg = listOf(20.0, 15.0, 10.0, 5.0, 2.5, 1.25),
+                barKg = 20.0,
+            ),
+            onTap = {},
+        )
     }
 }

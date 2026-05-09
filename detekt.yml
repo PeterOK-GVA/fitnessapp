@@ -23,7 +23,8 @@ naming:
 
 style:
   MagicNumber:
-    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**', '**/seed/**']
+    ignoreAnnotated: ['Preview']
     ignoreNumbers: ['-1', '0', '1', '2', '100']
   MaxLineLength:
     maxLineLength: 140
