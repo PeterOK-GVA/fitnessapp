@@ -16,6 +16,11 @@ complexity:
   CyclomaticComplexMethod:
     threshold: 20
 
+naming:
+  FunctionNaming:
+    active: true
+    ignoreAnnotated: ['Composable']
+
 style:
   MagicNumber:
     excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**']
@@ -29,6 +34,7 @@ style:
   UnusedPrivateMember:
     active: true
     allowedNames: '(_|ignored|expected|serialVersionUID)'
+    ignoreAnnotated: ['Preview', 'Composable']
 
 formatting:
   active: true
