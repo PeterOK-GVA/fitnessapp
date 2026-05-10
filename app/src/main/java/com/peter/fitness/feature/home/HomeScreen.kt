@@ -22,10 +22,12 @@ import com.peter.fitness.core.ui.theme.FitnessTheme
 fun HomeRoute(
     onEquipmentClick: () -> Unit,
     onCalculatorClick: () -> Unit,
+    onExercisesClick: () -> Unit,
 ) {
     HomeScreen(
         onEquipmentClick = onEquipmentClick,
         onCalculatorClick = onCalculatorClick,
+        onExercisesClick = onExercisesClick,
     )
 }
 
@@ -34,6 +36,7 @@ fun HomeRoute(
 fun HomeScreen(
     onEquipmentClick: () -> Unit,
     onCalculatorClick: () -> Unit,
+    onExercisesClick: () -> Unit,
 ) {
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Fitness") }) },
@@ -54,6 +57,11 @@ fun HomeScreen(
                 title = "Plate calculator",
                 subtitle = "Round any target weight to your inventory",
                 onClick = onCalculatorClick,
+            )
+            HomeCard(
+                title = "Exercises",
+                subtitle = "Browse the barbell catalogue",
+                onClick = onExercisesClick,
             )
             HomeCard(
                 title = "Workout",
@@ -95,6 +103,10 @@ private fun HomeCard(
 @Composable
 private fun HomeScreenPreview() {
     FitnessTheme {
-        HomeScreen(onEquipmentClick = {}, onCalculatorClick = {})
+        HomeScreen(
+            onEquipmentClick = {},
+            onCalculatorClick = {},
+            onExercisesClick = {},
+        )
     }
 }

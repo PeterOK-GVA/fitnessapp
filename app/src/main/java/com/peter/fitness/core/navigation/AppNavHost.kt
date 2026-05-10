@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.peter.fitness.feature.calculator.PlateCalculatorRoute
 import com.peter.fitness.feature.equipment.EquipmentRoute
+import com.peter.fitness.feature.exercises.ExerciseListRoute
 import com.peter.fitness.feature.home.HomeRoute
 
 @Composable
@@ -16,6 +17,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             HomeRoute(
                 onEquipmentClick = { navController.navigate(EquipmentDestination) },
                 onCalculatorClick = { navController.navigate(PlateCalculatorDestination) },
+                onExercisesClick = { navController.navigate(ExerciseListDestination) },
             )
         }
         composable<EquipmentDestination> {
@@ -23,6 +25,9 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable<PlateCalculatorDestination> {
             PlateCalculatorRoute(onBack = { navController.popBackStack() })
+        }
+        composable<ExerciseListDestination> {
+            ExerciseListRoute(onBack = { navController.popBackStack() })
         }
     }
 }

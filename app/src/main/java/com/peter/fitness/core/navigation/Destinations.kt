@@ -10,3 +10,6 @@ data object EquipmentDestination
 
 @Serializable
 data object PlateCalculatorDestination
+
+@Serializable
+data object ExerciseListDestination
