@@ -31,6 +31,9 @@ interface SessionDao {
     @Query("SELECT * FROM set_entry WHERE session_id = :sessionId ORDER BY ordinal")
     fun observeSetEntries(sessionId: String): Flow<List<SetEntryEntity>>
 
+    @Query("SELECT * FROM set_entry ORDER BY created_at")
+    fun observeAllSets(): Flow<List<SetEntryEntity>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSetEntry(setEntry: SetEntryEntity)
 

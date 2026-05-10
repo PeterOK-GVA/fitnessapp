@@ -19,6 +19,8 @@ interface SessionRepository {
 
     fun observeSetEntries(sessionId: SessionId): Flow<List<SetEntry>>
 
+    fun observeAllSets(): Flow<List<SetEntry>>
+
     suspend fun addSetEntry(setEntry: SetEntry)
 
     suspend fun updateSetEntry(setEntry: SetEntry)

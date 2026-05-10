@@ -9,6 +9,8 @@ import com.peter.fitness.feature.calculator.PlateCalculatorRoute
 import com.peter.fitness.feature.equipment.EquipmentRoute
 import com.peter.fitness.feature.exercises.ExerciseListRoute
 import com.peter.fitness.feature.exercises.ExercisePickerRoute
+import com.peter.fitness.feature.history.HistoryRoute
+import com.peter.fitness.feature.history.detail.SessionDetailRoute
 import com.peter.fitness.feature.home.HomeRoute
 import com.peter.fitness.feature.session.ActiveSessionRoute
 import com.peter.fitness.feature.session.logset.LogSetRoute
@@ -21,6 +23,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onEquipmentClick = { navController.navigate(EquipmentDestination) },
                 onCalculatorClick = { navController.navigate(PlateCalculatorDestination) },
                 onExercisesClick = { navController.navigate(ExerciseListDestination) },
+                onHistoryClick = { navController.navigate(HistoryDestination) },
                 onSessionStarted = { sessionId ->
                     navController.navigate(ActiveSessionDestination(sessionId))
                 },
@@ -64,6 +67,17 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable<EditSetDestination> {
             LogSetRoute(onDone = { navController.popBackStack() })
+        }
+        composable<HistoryDestination> {
+            HistoryRoute(
+                onBack = { navController.popBackStack() },
+                onSessionClick = { sessionId ->
+                    navController.navigate(SessionDetailDestination(sessionId))
+                },
+            )
+        }
+        composable<SessionDetailDestination> {
+            SessionDetailRoute(onBack = { navController.popBackStack() })
         }
     }
 }

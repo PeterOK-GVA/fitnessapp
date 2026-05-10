@@ -48,6 +48,8 @@ class FakeSessionRepository(
     override fun observeSetEntries(sessionId: SessionId): Flow<List<SetEntry>> =
         _sets.map { all -> all.filter { it.sessionId == sessionId } }
 
+    override fun observeAllSets(): Flow<List<SetEntry>> = _sets.asStateFlow()
+
     override suspend fun addSetEntry(setEntry: SetEntry) {
         _sets.value = _sets.value + setEntry
     }

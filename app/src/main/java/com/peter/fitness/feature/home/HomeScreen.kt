@@ -25,6 +25,7 @@ fun HomeRoute(
     onEquipmentClick: () -> Unit,
     onCalculatorClick: () -> Unit,
     onExercisesClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onSessionStarted: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -39,6 +40,7 @@ fun HomeRoute(
         onEquipmentClick = onEquipmentClick,
         onCalculatorClick = onCalculatorClick,
         onExercisesClick = onExercisesClick,
+        onHistoryClick = onHistoryClick,
         onStartWorkoutClick = viewModel::onStartWorkout,
     )
 }
@@ -49,6 +51,7 @@ fun HomeScreen(
     onEquipmentClick: () -> Unit,
     onCalculatorClick: () -> Unit,
     onExercisesClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onStartWorkoutClick: () -> Unit,
 ) {
     Scaffold(
@@ -83,9 +86,8 @@ fun HomeScreen(
             )
             HomeCard(
                 title = "History",
-                subtitle = "Coming in Phase 1.6",
-                onClick = {},
-                enabled = false,
+                subtitle = "Past sessions and total volume",
+                onClick = onHistoryClick,
             )
         }
     }
@@ -119,6 +121,7 @@ private fun HomeScreenPreview() {
             onEquipmentClick = {},
             onCalculatorClick = {},
             onExercisesClick = {},
+            onHistoryClick = {},
             onStartWorkoutClick = {},
         )
     }

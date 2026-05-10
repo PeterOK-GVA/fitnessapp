@@ -48,6 +48,11 @@ class RoomSessionRepository @Inject constructor(
             .map { entities -> entities.map(SetEntryEntity::toDomain) }
             .flowOn(ioDispatcher)
 
+    override fun observeAllSets(): Flow<List<SetEntry>> =
+        dao.observeAllSets()
+            .map { entities -> entities.map(SetEntryEntity::toDomain) }
+            .flowOn(ioDispatcher)
+
     override suspend fun addSetEntry(setEntry: SetEntry) {
         withContext(ioDispatcher) { dao.insertSetEntry(setEntry.toEntity()) }
     }

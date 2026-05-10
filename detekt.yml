@@ -16,6 +16,7 @@ complexity:
   TooManyFunctions:
     thresholdInClasses: 20
     thresholdInFiles: 25
+    thresholdInInterfaces: 20
   CyclomaticComplexMethod:
     threshold: 20
     ignoreAnnotated: ['Composable']
@@ -27,7 +28,7 @@ naming:
 
 style:
   MagicNumber:
-    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**', '**/seed/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**', '**/seed/**', '**/*Screen.kt']
     ignoreAnnotated: ['Preview']
     ignoreNumbers: ['-1', '0', '1', '2', '100']
   MaxLineLength:

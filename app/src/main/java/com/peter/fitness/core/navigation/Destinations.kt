@@ -25,3 +25,9 @@ data class LogNewSetDestination(val sessionId: String, val exerciseId: String)
 
 @Serializable
 data class EditSetDestination(val sessionId: String, val setEntryId: String)
+
+@Serializable
+data object HistoryDestination
+
+@Serializable
+data class SessionDetailDestination(val sessionId: String)
