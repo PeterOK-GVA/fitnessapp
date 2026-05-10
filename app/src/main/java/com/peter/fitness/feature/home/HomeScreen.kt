@@ -13,9 +13,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.peter.fitness.core.ui.theme.FitnessTheme
 
 @Composable
@@ -23,11 +25,21 @@ fun HomeRoute(
     onEquipmentClick: () -> Unit,
     onCalculatorClick: () -> Unit,
     onExercisesClick: () -> Unit,
+    onSessionStarted: (String) -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is HomeEvent.SessionStarted -> onSessionStarted(event.sessionId)
+            }
+        }
+    }
     HomeScreen(
         onEquipmentClick = onEquipmentClick,
         onCalculatorClick = onCalculatorClick,
         onExercisesClick = onExercisesClick,
+        onStartWorkoutClick = viewModel::onStartWorkout,
     )
 }
 
@@ -37,6 +49,7 @@ fun HomeScreen(
     onEquipmentClick: () -> Unit,
     onCalculatorClick: () -> Unit,
     onExercisesClick: () -> Unit,
+    onStartWorkoutClick: () -> Unit,
 ) {
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Fitness") }) },
@@ -48,6 +61,11 @@ fun HomeScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            HomeCard(
+                title = "Start workout",
+                subtitle = "Begin a manual session and log sets",
+                onClick = onStartWorkoutClick,
+            )
             HomeCard(
                 title = "Equipment",
                 subtitle = "Configure your bar, plates, rack, bench, pull-up bar",
@@ -62,12 +80,6 @@ fun HomeScreen(
                 title = "Exercises",
                 subtitle = "Browse the barbell catalogue",
                 onClick = onExercisesClick,
-            )
-            HomeCard(
-                title = "Workout",
-                subtitle = "Coming in Phase 1.5",
-                onClick = {},
-                enabled = false,
             )
             HomeCard(
                 title = "History",
@@ -107,6 +119,7 @@ private fun HomeScreenPreview() {
             onEquipmentClick = {},
             onCalculatorClick = {},
             onExercisesClick = {},
+            onStartWorkoutClick = {},
         )
     }
 }

@@ -13,3 +13,6 @@ data object PlateCalculatorDestination
 
 @Serializable
 data object ExerciseListDestination
+
+@Serializable
+data class ActiveSessionDestination(val sessionId: String)
