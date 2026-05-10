@@ -15,6 +15,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,23 +47,43 @@ fun ExerciseListRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     ExerciseListScreen(
+        title = "Exercises",
         state = state,
         onBack = onBack,
         onFilterSelected = viewModel::onFilterSelected,
+        onExerciseClick = {},
+    )
+}
+
+@Composable
+fun ExercisePickerRoute(
+    onBack: () -> Unit,
+    onExercisePicked: (ExerciseId) -> Unit,
+    viewModel: ExerciseListViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    ExerciseListScreen(
+        title = "Pick exercise",
+        state = state,
+        onBack = onBack,
+        onFilterSelected = viewModel::onFilterSelected,
+        onExerciseClick = onExercisePicked,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseListScreen(
+    title: String,
     state: ExerciseListUiState,
     onBack: () -> Unit,
     onFilterSelected: (MovementPattern?) -> Unit,
+    onExerciseClick: (ExerciseId) -> Unit,
 ) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Exercises") },
+                title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -80,7 +102,7 @@ fun ExerciseListScreen(
                     onFilterSelected = onFilterSelected,
                 )
                 HorizontalDivider()
-                ExerciseList(state.exercises)
+                ExerciseList(state.exercises, onExerciseClick)
             }
         }
     }
@@ -128,34 +150,43 @@ private fun FilterRow(
 }
 
 @Composable
-private fun ExerciseList(items: List<ExerciseListItemUi>) {
+private fun ExerciseList(
+    items: List<ExerciseListItemUi>,
+    onExerciseClick: (ExerciseId) -> Unit,
+) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(items, key = { it.id.value }) { item ->
-            ExerciseRow(item)
+            ExerciseRow(item, onClick = { onExerciseClick(item.id) })
         }
     }
 }
 
 @Composable
-private fun ExerciseRow(item: ExerciseListItemUi) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(item.name, style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = item.movementPattern.label(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Row(
-            modifier = Modifier.padding(top = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            TinyChip(item.techniqueDemand.label() + " technique")
-            if (item.requiresRack) TinyChip("Rack")
-            if (item.requiresBench) TinyChip("Bench")
-            if (item.requiresPullUpBar) TinyChip("Pull-up bar")
+private fun ExerciseRow(item: ExerciseListItemUi, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(item.name, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = item.movementPattern.label(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                modifier = Modifier.padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                TinyChip(item.techniqueDemand.label() + " technique")
+                if (item.requiresRack) TinyChip("Rack")
+                if (item.requiresBench) TinyChip("Bench")
+                if (item.requiresPullUpBar) TinyChip("Pull-up bar")
+            }
         }
     }
 }
@@ -185,6 +216,7 @@ internal fun TechniqueDemand.label(): String = name
 private fun ExerciseListScreenPreview() {
     FitnessTheme {
         ExerciseListScreen(
+            title = "Exercises",
             state = ExerciseListUiState(
                 isLoading = false,
                 exercises = listOf(
@@ -197,25 +229,13 @@ private fun ExerciseListScreenPreview() {
                         requiresBench = false,
                         requiresPullUpBar = false,
                     ),
-                    ExerciseListItemUi(
-                        id = ExerciseId("bent-row"),
-                        name = "Bent Row",
-                        movementPattern = MovementPattern.HORIZONTAL_PULL,
-                        techniqueDemand = TechniqueDemand.MODERATE,
-                        requiresRack = false,
-                        requiresBench = false,
-                        requiresPullUpBar = false,
-                    ),
                 ),
-                availableFilters = listOf(
-                    MovementPattern.SQUAT,
-                    MovementPattern.HIP_HINGE,
-                    MovementPattern.HORIZONTAL_PULL,
-                ),
+                availableFilters = listOf(MovementPattern.SQUAT),
                 selectedFilter = null,
             ),
             onBack = {},
             onFilterSelected = {},
+            onExerciseClick = {},
         )
     }
 }

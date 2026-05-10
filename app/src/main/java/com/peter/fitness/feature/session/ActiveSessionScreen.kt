@@ -9,14 +9,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +45,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ActiveSessionRoute(
     onFinished: () -> Unit,
+    onAddSet: (sessionId: String) -> Unit,
+    onEditSet: (sessionId: String, setEntryId: String) -> Unit,
     viewModel: ActiveSessionViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -48,6 +57,8 @@ fun ActiveSessionRoute(
         state = state,
         onFinishClick = viewModel::onFinishSession,
         onBack = onFinished,
+        onAddSetClick = { onAddSet(state.sessionId) },
+        onSetClick = { setId -> onEditSet(state.sessionId, setId) },
     )
 }
 
@@ -57,6 +68,8 @@ fun ActiveSessionScreen(
     state: ActiveSessionUiState,
     onFinishClick: () -> Unit,
     onBack: () -> Unit,
+    onAddSetClick: () -> Unit,
+    onSetClick: (String) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -71,6 +84,8 @@ fun ActiveSessionScreen(
             else -> Body(
                 state = state,
                 onFinishClick = onFinishClick,
+                onAddSetClick = onAddSetClick,
+                onSetClick = onSetClick,
                 modifier = Modifier.padding(padding),
             )
         }
@@ -101,6 +116,8 @@ private fun MissingSession(modifier: Modifier = Modifier, onBack: () -> Unit) {
 private fun Body(
     state: ActiveSessionUiState,
     onFinishClick: () -> Unit,
+    onAddSetClick: () -> Unit,
+    onSetClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)) {
@@ -110,14 +127,28 @@ private fun Body(
         if (state.sets.isEmpty()) {
             EmptySetsHint(modifier = Modifier.weight(1f, fill = true))
         } else {
-            SetsList(sets = state.sets, modifier = Modifier.weight(1f, fill = true))
+            SetsList(
+                sets = state.sets,
+                onSetClick = onSetClick,
+                modifier = Modifier.weight(1f, fill = true),
+            )
+        }
+        OutlinedButton(
+            onClick = onAddSetClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Add set")
         }
         Button(
             onClick = onFinishClick,
             enabled = !state.isFinishing,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
+                .padding(vertical = 8.dp),
         ) {
             Text(if (state.isFinishing) "Finishing…" else "Finish session")
         }
@@ -141,7 +172,7 @@ private fun SessionHeader(state: ActiveSessionUiState) {
 private fun EmptySetsHint(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
-            "No sets logged yet. Set logging arrives in Phase 1.5b.",
+            "No sets yet. Tap Add set to log your first.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -149,29 +180,39 @@ private fun EmptySetsHint(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SetsList(sets: List<SetEntryUi>, modifier: Modifier = Modifier) {
+private fun SetsList(
+    sets: List<SetEntryUi>,
+    onSetClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(sets, key = { it.id }) { set ->
-            SetRow(set)
+            SetRow(set, onClick = { onSetClick(set.id) })
         }
     }
 }
 
 @Composable
-private fun SetRow(set: SetEntryUi) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            "${set.ordinal + 1}. ${set.exerciseName}",
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Text(
-            "${set.targetReps} × ${formatKg(set.targetLoadKg)}",
-            style = MaterialTheme.typography.bodyMedium,
-        )
+private fun SetRow(set: SetEntryUi, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                "${set.ordinal + 1}. ${set.exerciseName}",
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(
+                "${set.targetReps} × ${formatKg(set.targetLoadKg)}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }
 
@@ -203,6 +244,8 @@ private fun ActiveSessionScreenPreview() {
             ),
             onFinishClick = {},
             onBack = {},
+            onAddSetClick = {},
+            onSetClick = {},
         )
     }
 }

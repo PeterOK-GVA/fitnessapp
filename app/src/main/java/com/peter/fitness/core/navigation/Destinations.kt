@@ -16,3 +16,12 @@ data object ExerciseListDestination
 
 @Serializable
 data class ActiveSessionDestination(val sessionId: String)
+
+@Serializable
+data class ExercisePickerDestination(val sessionId: String)
+
+@Serializable
+data class LogNewSetDestination(val sessionId: String, val exerciseId: String)
+
+@Serializable
+data class EditSetDestination(val sessionId: String, val setEntryId: String)
