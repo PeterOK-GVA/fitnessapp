@@ -7,3 +7,6 @@ data object HomeDestination
 
 @Serializable
 data object EquipmentDestination
+
+@Serializable
+data object PlateCalculatorDestination

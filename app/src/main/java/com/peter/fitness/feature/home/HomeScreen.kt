@@ -19,13 +19,22 @@ import androidx.compose.ui.unit.dp
 import com.peter.fitness.core.ui.theme.FitnessTheme
 
 @Composable
-fun HomeRoute(onEquipmentClick: () -> Unit) {
-    HomeScreen(onEquipmentClick = onEquipmentClick)
+fun HomeRoute(
+    onEquipmentClick: () -> Unit,
+    onCalculatorClick: () -> Unit,
+) {
+    HomeScreen(
+        onEquipmentClick = onEquipmentClick,
+        onCalculatorClick = onCalculatorClick,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onEquipmentClick: () -> Unit) {
+fun HomeScreen(
+    onEquipmentClick: () -> Unit,
+    onCalculatorClick: () -> Unit,
+) {
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Fitness") }) },
     ) { padding ->
@@ -40,6 +49,11 @@ fun HomeScreen(onEquipmentClick: () -> Unit) {
                 title = "Equipment",
                 subtitle = "Configure your bar, plates, rack, bench, pull-up bar",
                 onClick = onEquipmentClick,
+            )
+            HomeCard(
+                title = "Plate calculator",
+                subtitle = "Round any target weight to your inventory",
+                onClick = onCalculatorClick,
             )
             HomeCard(
                 title = "Workout",
@@ -81,6 +95,6 @@ private fun HomeCard(
 @Composable
 private fun HomeScreenPreview() {
     FitnessTheme {
-        HomeScreen(onEquipmentClick = {})
+        HomeScreen(onEquipmentClick = {}, onCalculatorClick = {})
     }
 }
