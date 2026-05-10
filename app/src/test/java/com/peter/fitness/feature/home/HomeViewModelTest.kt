@@ -5,6 +5,9 @@ import com.peter.fitness.core.ids.IdFactory
 import com.peter.fitness.domain.model.SessionFocus
 import com.peter.fitness.domain.model.SessionId
 import com.peter.fitness.domain.model.SetEntryId
+import com.peter.fitness.domain.usecase.StartRestTimerUseCase
+import com.peter.fitness.testsupport.FakeRestTimerRepository
+import com.peter.fitness.testsupport.FakeRestTimerServiceController
 import com.peter.fitness.testsupport.FakeSessionRepository
 import com.peter.fitness.testsupport.MainDispatcherExtension
 import io.kotest.matchers.shouldBe
@@ -34,6 +37,11 @@ class HomeViewModelTest {
                 sessionRepository = repo,
                 clock = fixedClock,
                 idFactory = FixedIdFactory(SessionId("new-session-id")),
+                startRestTimer = StartRestTimerUseCase(
+                    repository = FakeRestTimerRepository(),
+                    controller = FakeRestTimerServiceController(),
+                    clock = fixedClock,
+                ),
             )
 
             vm.events.test {

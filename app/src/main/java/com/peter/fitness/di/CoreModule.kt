@@ -2,6 +2,8 @@ package com.peter.fitness.di
 
 import com.peter.fitness.core.ids.IdFactory
 import com.peter.fitness.core.ids.RandomIdFactory
+import com.peter.fitness.service.timer.AndroidRestTimerServiceController
+import com.peter.fitness.service.timer.RestTimerServiceController
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -21,9 +23,15 @@ object TimeModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class IdFactoryModule {
+abstract class CoreBindingsModule {
 
     @Binds
     @Singleton
     abstract fun bindIdFactory(impl: RandomIdFactory): IdFactory
+
+    @Binds
+    @Singleton
+    abstract fun bindRestTimerServiceController(
+        impl: AndroidRestTimerServiceController,
+    ): RestTimerServiceController
 }

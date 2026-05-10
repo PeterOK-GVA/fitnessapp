@@ -6,6 +6,7 @@ import com.peter.fitness.core.ids.IdFactory
 import com.peter.fitness.domain.model.Session
 import com.peter.fitness.domain.model.SessionFocus
 import com.peter.fitness.domain.repository.SessionRepository
+import com.peter.fitness.domain.usecase.StartRestTimerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ class HomeViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val clock: Clock,
     private val idFactory: IdFactory,
+    private val startRestTimer: StartRestTimerUseCase,
 ) : ViewModel() {
 
     private val _events = Channel<HomeEvent>(capacity = Channel.BUFFERED)
@@ -38,6 +40,16 @@ class HomeViewModel @Inject constructor(
             )
             _events.send(HomeEvent.SessionStarted(newId.value))
         }
+    }
+
+    fun onStartTestRest() {
+        viewModelScope.launch {
+            startRestTimer(durationSeconds = TEST_REST_SECONDS, label = "Test rest")
+        }
+    }
+
+    private companion object {
+        const val TEST_REST_SECONDS = 60L
     }
 }
 

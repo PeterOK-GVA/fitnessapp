@@ -5,7 +5,9 @@ import androidx.room.Room
 import com.peter.fitness.data.db.FitnessDatabase
 import com.peter.fitness.data.db.dao.EquipmentInventoryDao
 import com.peter.fitness.data.db.dao.ExerciseDao
+import com.peter.fitness.data.db.dao.RestTimerDao
 import com.peter.fitness.data.db.dao.SessionDao
+import com.peter.fitness.data.db.migrations.MIGRATION_1_2
 import com.peter.fitness.data.db.seed.BarbellSeedCallback
 import dagger.Module
 import dagger.Provides
@@ -23,6 +25,7 @@ object DatabaseModule {
     fun provideFitnessDatabase(@ApplicationContext context: Context): FitnessDatabase =
         Room.databaseBuilder(context, FitnessDatabase::class.java, FitnessDatabase.NAME)
             .addCallback(BarbellSeedCallback)
+            .addMigrations(MIGRATION_1_2)
             .build()
 
     @Provides
@@ -33,4 +36,7 @@ object DatabaseModule {
 
     @Provides
     fun provideEquipmentInventoryDao(db: FitnessDatabase): EquipmentInventoryDao = db.equipmentInventoryDao()
+
+    @Provides
+    fun provideRestTimerDao(db: FitnessDatabase): RestTimerDao = db.restTimerDao()
 }
