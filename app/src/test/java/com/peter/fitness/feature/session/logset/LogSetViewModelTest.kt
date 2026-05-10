@@ -4,10 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.peter.fitness.core.ids.IdFactory
 import com.peter.fitness.domain.model.ConditioningSuitability
+import com.peter.fitness.domain.model.EquipmentInventory
 import com.peter.fitness.domain.model.Exercise
 import com.peter.fitness.domain.model.ExerciseId
 import com.peter.fitness.domain.model.LoadType
 import com.peter.fitness.domain.model.MovementPattern
+import com.peter.fitness.domain.model.PlatePair
 import com.peter.fitness.domain.model.Session
 import com.peter.fitness.domain.model.SessionFocus
 import com.peter.fitness.domain.model.SessionId
@@ -16,6 +18,7 @@ import com.peter.fitness.domain.model.SetEntryId
 import com.peter.fitness.domain.model.SubjectiveLoad
 import com.peter.fitness.domain.model.TechniqueDemand
 import com.peter.fitness.domain.model.TechniqueRating
+import com.peter.fitness.testsupport.FakeEquipmentInventoryRepository
 import com.peter.fitness.testsupport.FakeExerciseRepository
 import com.peter.fitness.testsupport.FakeSessionRepository
 import com.peter.fitness.testsupport.MainDispatcherExtension
@@ -289,6 +292,90 @@ class LogSetViewModelTest {
         vm.uiState.value.loadKgError.shouldBeNull()
     }
 
+    @Test
+    fun `valid load surfaces an on-target plate hint`() = runTest(main.dispatcher) {
+        val vm = newViewModel(addModeSavedState())
+        advanceUntilIdle()
+
+        vm.onLoadKgChange("80")
+        val hint = vm.uiState.value.plateHint
+        hint.shouldNotBeNull()
+        hint.isOnTarget shouldBe true
+        hint.achievableText shouldBe "Snaps to 80 kg"
+        hint.perSideText shouldBe "Per side: 1 × 20 kg + 1 × 10 kg"
+    }
+
+    @Test
+    fun `unreachable load surfaces an off-target hint with deviation`() = runTest(main.dispatcher) {
+        val limitedInventory = EquipmentInventory(
+            barKg = 20.0,
+            hasRack = true,
+            hasBench = true,
+            hasPullUpBar = false,
+            plates = listOf(PlatePair(20.0, 2), PlatePair(10.0, 2)),
+            updatedAt = now,
+        )
+        val vm = newViewModel(
+            addModeSavedState(),
+            equipmentRepo = FakeEquipmentInventoryRepository(limitedInventory),
+        )
+        advanceUntilIdle()
+
+        vm.onLoadKgChange("85")
+        val hint = vm.uiState.value.plateHint
+        hint.shouldNotBeNull()
+        hint.isOnTarget shouldBe false
+        hint.achievableText shouldBe "Snaps to 80 kg (-5 kg)"
+    }
+
+    @Test
+    fun `bar-weight load shows Bar only hint`() = runTest(main.dispatcher) {
+        val vm = newViewModel(addModeSavedState())
+        advanceUntilIdle()
+
+        vm.onLoadKgChange("20")
+        val hint = vm.uiState.value.plateHint
+        hint.shouldNotBeNull()
+        hint.isOnTarget shouldBe true
+        hint.perSideText shouldBe "Bar only"
+    }
+
+    @Test
+    fun `empty load does not surface a hint`() = runTest(main.dispatcher) {
+        val vm = newViewModel(addModeSavedState())
+        advanceUntilIdle()
+
+        vm.uiState.value.plateHint.shouldBeNull()
+    }
+
+    @Test
+    fun `edit mode hint is computed from prefilled load`() = runTest(main.dispatcher) {
+        val existing = SetEntry(
+            id = SetEntryId("set-1"),
+            sessionId = sessionId,
+            exerciseId = exerciseId,
+            ordinal = 0,
+            targetReps = 5,
+            targetLoadKg = 80.0,
+            completedReps = 5,
+            performedLoadKg = 80.0,
+            subjectiveLoad = SubjectiveLoad.OK,
+            techniqueRating = TechniqueRating.GOOD,
+            createdAt = now,
+        )
+        val sessionRepo = FakeSessionRepository(
+            initialSessions = listOf(seedSession),
+            initialSets = listOf(existing),
+        )
+        val vm = newViewModel(editModeSavedState("set-1"), sessionRepo = sessionRepo)
+        advanceUntilIdle()
+
+        val hint = vm.uiState.value.plateHint
+        hint.shouldNotBeNull()
+        hint.isOnTarget shouldBe true
+        hint.perSideText shouldBe "Per side: 1 × 20 kg + 1 × 10 kg"
+    }
+
     private fun addModeSavedState(): SavedStateHandle = SavedStateHandle(
         mapOf("sessionId" to sessionId.value, "exerciseId" to exerciseId.value),
     )
@@ -297,15 +384,33 @@ class LogSetViewModelTest {
         mapOf("sessionId" to sessionId.value, "setEntryId" to setEntryId),
     )
 
+    private fun defaultInventory(): EquipmentInventory = EquipmentInventory(
+        barKg = 20.0,
+        hasRack = true,
+        hasBench = true,
+        hasPullUpBar = false,
+        plates = listOf(
+            PlatePair(20.0, 4),
+            PlatePair(15.0, 2),
+            PlatePair(10.0, 4),
+            PlatePair(5.0, 4),
+            PlatePair(2.5, 4),
+            PlatePair(1.25, 2),
+        ),
+        updatedAt = now,
+    )
+
     private fun newViewModel(
         savedStateHandle: SavedStateHandle,
         sessionRepo: FakeSessionRepository = FakeSessionRepository(initialSessions = listOf(seedSession)),
         exerciseRepo: FakeExerciseRepository = FakeExerciseRepository(initial = listOf(seedExercise)),
+        equipmentRepo: FakeEquipmentInventoryRepository = FakeEquipmentInventoryRepository(defaultInventory()),
         idFactory: IdFactory = FixedIdFactory(SetEntryId("new-set-id")),
     ): LogSetViewModel = LogSetViewModel(
         savedStateHandle = savedStateHandle,
         sessionRepository = sessionRepo,
         exerciseRepository = exerciseRepo,
+        equipmentRepository = equipmentRepo,
         idFactory = idFactory,
         clock = Clock.fixed(now, ZoneOffset.UTC),
     )

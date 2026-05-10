@@ -17,6 +17,13 @@ data class LogSetUiState(
     val loadKgError: String? = null,
     val isSaving: Boolean = false,
     val isDeleting: Boolean = false,
+    val plateHint: PlateHintUi? = null,
+)
+
+data class PlateHintUi(
+    val achievableText: String,
+    val perSideText: String,
+    val isOnTarget: Boolean,
 )
 
 sealed interface LogSetEvent {

@@ -126,6 +126,24 @@ fun LogSetScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            state.plateHint?.let { hint ->
+                Column(modifier = Modifier.padding(start = 4.dp)) {
+                    Text(
+                        text = hint.achievableText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (hint.isOnTarget) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                    )
+                    Text(
+                        text = hint.perSideText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
 
             SubjectiveLoadRow(
                 value = state.subjectiveLoad,

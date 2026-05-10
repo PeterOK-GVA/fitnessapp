@@ -4,12 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.peter.fitness.core.ids.IdFactory
+import com.peter.fitness.domain.model.EquipmentInventory
 import com.peter.fitness.domain.model.ExerciseId
 import com.peter.fitness.domain.model.SessionId
 import com.peter.fitness.domain.model.SetEntry
 import com.peter.fitness.domain.model.SetEntryId
 import com.peter.fitness.domain.model.SubjectiveLoad
 import com.peter.fitness.domain.model.TechniqueRating
+import com.peter.fitness.domain.plates.PlateCalculator
+import com.peter.fitness.domain.repository.EquipmentInventoryRepository
 import com.peter.fitness.domain.repository.ExerciseRepository
 import com.peter.fitness.domain.repository.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,12 +27,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import javax.inject.Inject
+import kotlin.math.abs
 
 @HiltViewModel
 class LogSetViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val sessionRepository: SessionRepository,
     private val exerciseRepository: ExerciseRepository,
+    private val equipmentRepository: EquipmentInventoryRepository,
     private val idFactory: IdFactory,
     private val clock: Clock,
 ) : ViewModel() {
@@ -44,6 +49,8 @@ class LogSetViewModel @Inject constructor(
     private val setEntryIdArg: SetEntryId? =
         savedStateHandle.get<String>(KEY_SET_ENTRY_ID)?.let(::SetEntryId)
 
+    private var currentInventory: EquipmentInventory? = null
+
     private val _uiState = MutableStateFlow(
         LogSetUiState(isEditMode = setEntryIdArg != null),
     )
@@ -57,6 +64,7 @@ class LogSetViewModel @Inject constructor(
     }
 
     private suspend fun loadInitialState() {
+        currentInventory = equipmentRepository.current()
         if (setEntryIdArg != null) {
             val existing = sessionRepository.observeSetEntries(sessionId).first()
                 .firstOrNull { it.id == setEntryIdArg }
@@ -65,15 +73,17 @@ class LogSetViewModel @Inject constructor(
                 return
             }
             val name = exerciseRepository.findById(existing.exerciseId)?.name ?: "Exercise"
+            val initialLoad = (existing.performedLoadKg ?: existing.targetLoadKg).toCleanString()
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     exerciseId = existing.exerciseId.value,
                     exerciseName = name,
                     reps = (existing.completedReps ?: existing.targetReps).toString(),
-                    loadKg = (existing.performedLoadKg ?: existing.targetLoadKg).toCleanString(),
+                    loadKg = initialLoad,
                     subjectiveLoad = existing.subjectiveLoad,
                     techniqueRating = existing.techniqueRating,
+                    plateHint = computePlateHint(initialLoad, currentInventory),
                 )
             }
         } else {
@@ -96,7 +106,13 @@ class LogSetViewModel @Inject constructor(
     }
 
     fun onLoadKgChange(value: String) {
-        _uiState.update { it.copy(loadKg = value, loadKgError = null) }
+        _uiState.update {
+            it.copy(
+                loadKg = value,
+                loadKgError = null,
+                plateHint = computePlateHint(value, currentInventory),
+            )
+        }
     }
 
     fun onSubjectiveLoadChange(value: SubjectiveLoad?) {
@@ -181,6 +197,32 @@ class LogSetViewModel @Inject constructor(
         )
     }
 
+    private fun computePlateHint(loadStr: String, inv: EquipmentInventory?): PlateHintUi? {
+        if (inv == null) return null
+        val target = loadStr.trim().toDoubleOrNull() ?: return null
+        if (target < 0.0) return null
+        val result = PlateCalculator.snap(target, inv)
+        val onTarget = abs(result.deviationKg) < ON_TARGET_TOLERANCE_KG
+        val achievable = formatKg(result.achievableKg)
+        val achievableText = if (onTarget) {
+            "Snaps to $achievable"
+        } else {
+            "Snaps to $achievable (${formatSignedKg(result.deviationKg)})"
+        }
+        val perSideText = if (result.perSide.isEmpty()) {
+            "Bar only"
+        } else {
+            "Per side: " + result.perSide.joinToString(" + ") {
+                "${it.countPerSide} × ${formatKg(it.denominationKg)}"
+            }
+        }
+        return PlateHintUi(
+            achievableText = achievableText,
+            perSideText = perSideText,
+            isOnTarget = onTarget,
+        )
+    }
+
     private data class ParsedInput(val reps: Int, val loadKg: Double)
 
     private fun LogSetUiState.parse(): ParsedInput? {
@@ -203,8 +245,17 @@ class LogSetViewModel @Inject constructor(
         const val KEY_SESSION_ID = "sessionId"
         const val KEY_EXERCISE_ID = "exerciseId"
         const val KEY_SET_ENTRY_ID = "setEntryId"
+        const val ON_TARGET_TOLERANCE_KG = 0.01
     }
 }
 
 private fun Double.toCleanString(): String =
     if (this == this.toLong().toDouble()) this.toLong().toString() else this.toString()
+
+private fun formatKg(kg: Double): String =
+    if (kg == kg.toLong().toDouble()) "${kg.toLong()} kg" else "$kg kg"
+
+private fun formatSignedKg(kg: Double): String {
+    val sign = if (kg >= 0.0) "+" else ""
+    return "$sign${formatKg(kg)}"
+}
