@@ -6,6 +6,7 @@ import com.peter.fitness.domain.model.SessionFocus
 import com.peter.fitness.domain.model.SessionId
 import com.peter.fitness.domain.model.SetEntryId
 import com.peter.fitness.domain.usecase.StartRestTimerUseCase
+import com.peter.fitness.testsupport.FakeRestTimerAlarmScheduler
 import com.peter.fitness.testsupport.FakeRestTimerRepository
 import com.peter.fitness.testsupport.FakeRestTimerServiceController
 import com.peter.fitness.testsupport.FakeSessionRepository
@@ -40,6 +41,7 @@ class HomeViewModelTest {
                 startRestTimer = StartRestTimerUseCase(
                     repository = FakeRestTimerRepository(),
                     controller = FakeRestTimerServiceController(),
+                    alarmScheduler = FakeRestTimerAlarmScheduler(),
                     clock = fixedClock,
                 ),
             )

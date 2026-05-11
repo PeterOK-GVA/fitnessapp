@@ -21,6 +21,7 @@ import com.peter.fitness.domain.model.TechniqueRating
 import com.peter.fitness.domain.usecase.StartRestTimerUseCase
 import com.peter.fitness.testsupport.FakeEquipmentInventoryRepository
 import com.peter.fitness.testsupport.FakeExerciseRepository
+import com.peter.fitness.testsupport.FakeRestTimerAlarmScheduler
 import com.peter.fitness.testsupport.FakeRestTimerRepository
 import com.peter.fitness.testsupport.FakeRestTimerServiceController
 import com.peter.fitness.testsupport.FakeSessionRepository
@@ -472,6 +473,7 @@ class LogSetViewModelTest {
         startRestTimer = StartRestTimerUseCase(
             repository = restRepo,
             controller = controller,
+            alarmScheduler = FakeRestTimerAlarmScheduler(),
             clock = Clock.fixed(now, ZoneOffset.UTC),
         ),
     )

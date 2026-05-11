@@ -2,7 +2,9 @@ package com.peter.fitness.di
 
 import com.peter.fitness.core.ids.IdFactory
 import com.peter.fitness.core.ids.RandomIdFactory
+import com.peter.fitness.service.timer.AndroidRestTimerAlarmScheduler
 import com.peter.fitness.service.timer.AndroidRestTimerServiceController
+import com.peter.fitness.service.timer.RestTimerAlarmScheduler
 import com.peter.fitness.service.timer.RestTimerServiceController
 import dagger.Binds
 import dagger.Module
@@ -34,4 +36,10 @@ abstract class CoreBindingsModule {
     abstract fun bindRestTimerServiceController(
         impl: AndroidRestTimerServiceController,
     ): RestTimerServiceController
+
+    @Binds
+    @Singleton
+    abstract fun bindRestTimerAlarmScheduler(
+        impl: AndroidRestTimerAlarmScheduler,
+    ): RestTimerAlarmScheduler
 }

@@ -2,6 +2,7 @@ package com.peter.fitness.domain.usecase
 
 import com.peter.fitness.domain.model.SessionId
 import com.peter.fitness.domain.model.SetEntryId
+import com.peter.fitness.testsupport.FakeRestTimerAlarmScheduler
 import com.peter.fitness.testsupport.FakeRestTimerRepository
 import com.peter.fitness.testsupport.FakeRestTimerServiceController
 import com.peter.fitness.testsupport.MainDispatcherExtension
@@ -29,7 +30,8 @@ class StartRestTimerUseCaseTest {
     fun `start writes timer to repository and starts service`() = runTest(main.dispatcher) {
         val repo = FakeRestTimerRepository()
         val controller = FakeRestTimerServiceController()
-        val useCase = StartRestTimerUseCase(repo, controller, clock)
+        val scheduler = FakeRestTimerAlarmScheduler()
+        val useCase = StartRestTimerUseCase(repo, controller, scheduler, clock)
 
         useCase(durationSeconds = 90, label = "Rest")
 
@@ -46,7 +48,8 @@ class StartRestTimerUseCaseTest {
     fun `start preserves session and set entry context when provided`() = runTest(main.dispatcher) {
         val repo = FakeRestTimerRepository()
         val controller = FakeRestTimerServiceController()
-        val useCase = StartRestTimerUseCase(repo, controller, clock)
+        val scheduler = FakeRestTimerAlarmScheduler()
+        val useCase = StartRestTimerUseCase(repo, controller, scheduler, clock)
 
         useCase(
             durationSeconds = 120,
@@ -64,7 +67,8 @@ class StartRestTimerUseCaseTest {
     fun `start replaces an in-flight timer`() = runTest(main.dispatcher) {
         val repo = FakeRestTimerRepository()
         val controller = FakeRestTimerServiceController()
-        val useCase = StartRestTimerUseCase(repo, controller, clock)
+        val scheduler = FakeRestTimerAlarmScheduler()
+        val useCase = StartRestTimerUseCase(repo, controller, scheduler, clock)
 
         useCase(durationSeconds = 60)
         useCase(durationSeconds = 120, label = "Different")
@@ -72,5 +76,20 @@ class StartRestTimerUseCaseTest {
         repo.startCount shouldBe 2
         repo.current()?.durationSeconds shouldBe 120
         repo.current()?.label shouldBe "Different"
+    }
+
+    @Test
+    fun `start schedules an alarm at endsAt plus a small buffer`() = runTest(main.dispatcher) {
+        val repo = FakeRestTimerRepository()
+        val controller = FakeRestTimerServiceController()
+        val scheduler = FakeRestTimerAlarmScheduler()
+        val useCase = StartRestTimerUseCase(repo, controller, scheduler, clock)
+
+        useCase(durationSeconds = 90)
+
+        scheduler.scheduleCount shouldBe 1
+        // Alarm should land at now + duration + 2s buffer
+        val expectedMs = now.plusSeconds(90 + 2).toEpochMilli()
+        scheduler.lastScheduledAtEpochMs shouldBe expectedMs
     }
 }

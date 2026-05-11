@@ -17,6 +17,7 @@ import com.peter.fitness.domain.model.TechniqueDemand
 import com.peter.fitness.domain.model.TechniqueRating
 import com.peter.fitness.domain.usecase.CancelRestTimerUseCase
 import com.peter.fitness.testsupport.FakeExerciseRepository
+import com.peter.fitness.testsupport.FakeRestTimerAlarmScheduler
 import com.peter.fitness.testsupport.FakeRestTimerRepository
 import com.peter.fitness.testsupport.FakeRestTimerServiceController
 import com.peter.fitness.testsupport.FakeSessionRepository
@@ -216,7 +217,7 @@ class ActiveSessionViewModelTest {
             sessionRepository = sessionRepo,
             exerciseRepository = exerciseRepo,
             restTimerRepository = restRepo,
-            cancelRestTimer = CancelRestTimerUseCase(restRepo, controller),
+            cancelRestTimer = CancelRestTimerUseCase(restRepo, controller, FakeRestTimerAlarmScheduler()),
             clock = clock,
         )
     }

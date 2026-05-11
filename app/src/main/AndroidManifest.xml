@@ -42,6 +42,11 @@
                 android:value="rest_timer_for_workout_app" />
         </service>
 
+        <receiver
+            android:name=".service.timer.RestTimerAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>
