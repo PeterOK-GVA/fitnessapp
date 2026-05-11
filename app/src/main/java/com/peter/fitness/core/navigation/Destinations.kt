@@ -31,3 +31,6 @@ data object HistoryDestination
 
 @Serializable
 data class SessionDetailDestination(val sessionId: String)
+
+@Serializable
+data object PrsDestination

@@ -12,6 +12,7 @@ import com.peter.fitness.feature.exercises.ExercisePickerRoute
 import com.peter.fitness.feature.history.HistoryRoute
 import com.peter.fitness.feature.history.detail.SessionDetailRoute
 import com.peter.fitness.feature.home.HomeRoute
+import com.peter.fitness.feature.prs.PrsRoute
 import com.peter.fitness.feature.session.ActiveSessionRoute
 import com.peter.fitness.feature.session.logset.LogSetRoute
 
@@ -24,6 +25,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onCalculatorClick = { navController.navigate(PlateCalculatorDestination) },
                 onExercisesClick = { navController.navigate(ExerciseListDestination) },
                 onHistoryClick = { navController.navigate(HistoryDestination) },
+                onPrsClick = { navController.navigate(PrsDestination) },
                 onSessionStarted = { sessionId ->
                     navController.navigate(ActiveSessionDestination(sessionId))
                 },
@@ -78,6 +80,9 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable<SessionDetailDestination> {
             SessionDetailRoute(onBack = { navController.popBackStack() })
+        }
+        composable<PrsDestination> {
+            PrsRoute(onBack = { navController.popBackStack() })
         }
     }
 }

@@ -26,6 +26,7 @@ fun HomeRoute(
     onCalculatorClick: () -> Unit,
     onExercisesClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onPrsClick: () -> Unit,
     onSessionStarted: (String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -41,6 +42,7 @@ fun HomeRoute(
         onCalculatorClick = onCalculatorClick,
         onExercisesClick = onExercisesClick,
         onHistoryClick = onHistoryClick,
+        onPrsClick = onPrsClick,
         onStartWorkoutClick = viewModel::onStartWorkout,
     )
 }
@@ -52,6 +54,7 @@ fun HomeScreen(
     onCalculatorClick: () -> Unit,
     onExercisesClick: () -> Unit,
     onHistoryClick: () -> Unit,
+    onPrsClick: () -> Unit,
     onStartWorkoutClick: () -> Unit,
 ) {
     Scaffold(
@@ -89,6 +92,11 @@ fun HomeScreen(
                 subtitle = "Past sessions and total volume",
                 onClick = onHistoryClick,
             )
+            HomeCard(
+                title = "PRs",
+                subtitle = "Heaviest sets and estimated 1RMs per exercise",
+                onClick = onPrsClick,
+            )
         }
     }
 }
@@ -122,6 +130,7 @@ private fun HomeScreenPreview() {
             onCalculatorClick = {},
             onExercisesClick = {},
             onHistoryClick = {},
+            onPrsClick = {},
             onStartWorkoutClick = {},
         )
     }
