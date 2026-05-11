@@ -15,6 +15,7 @@ import com.peter.fitness.domain.plates.PlateCalculator
 import com.peter.fitness.domain.repository.EquipmentInventoryRepository
 import com.peter.fitness.domain.repository.ExerciseRepository
 import com.peter.fitness.domain.repository.SessionRepository
+import com.peter.fitness.domain.usecase.StartRestTimerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,7 @@ class LogSetViewModel @Inject constructor(
     private val equipmentRepository: EquipmentInventoryRepository,
     private val idFactory: IdFactory,
     private val clock: Clock,
+    private val startRestTimer: StartRestTimerUseCase,
 ) : ViewModel() {
 
     private val sessionId: SessionId = SessionId(
@@ -124,6 +126,14 @@ class LogSetViewModel @Inject constructor(
     }
 
     fun onSave() {
+        save(startRest = false)
+    }
+
+    fun onSaveAndRest() {
+        save(startRest = true)
+    }
+
+    private fun save(startRest: Boolean) {
         val state = _uiState.value
         if (state.isSaving) return
         val parsed = state.parse() ?: run {
@@ -134,10 +144,19 @@ class LogSetViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, repsError = null, loadKgError = null) }
-            if (setEntryIdArg == null) {
+            val savedSetEntryId: SetEntryId = if (setEntryIdArg == null) {
                 addNewSet(parsed.reps, parsed.loadKg, state.subjectiveLoad, state.techniqueRating)
             } else {
                 updateExistingSet(parsed.reps, parsed.loadKg, state.subjectiveLoad, state.techniqueRating)
+                setEntryIdArg
+            }
+            if (startRest) {
+                startRestTimer(
+                    durationSeconds = DEFAULT_REST_SECONDS,
+                    sessionId = sessionId,
+                    setEntryId = savedSetEntryId,
+                    label = "Rest",
+                )
             }
             _events.send(LogSetEvent.Saved)
         }
@@ -158,10 +177,11 @@ class LogSetViewModel @Inject constructor(
         loadKg: Double,
         subjective: SubjectiveLoad?,
         technique: TechniqueRating?,
-    ) {
+    ): SetEntryId {
         val ordinal = sessionRepository.observeSetEntries(sessionId).first().size
+        val newId = idFactory.newSetEntryId()
         val entry = SetEntry(
-            id = idFactory.newSetEntryId(),
+            id = newId,
             sessionId = sessionId,
             exerciseId = ExerciseId(_uiState.value.exerciseId),
             ordinal = ordinal,
@@ -174,6 +194,7 @@ class LogSetViewModel @Inject constructor(
             createdAt = clock.instant(),
         )
         sessionRepository.addSetEntry(entry)
+        return newId
     }
 
     private suspend fun updateExistingSet(
@@ -246,6 +267,7 @@ class LogSetViewModel @Inject constructor(
         const val KEY_EXERCISE_ID = "exerciseId"
         const val KEY_SET_ENTRY_ID = "setEntryId"
         const val ON_TARGET_TOLERANCE_KG = 0.01
+        const val DEFAULT_REST_SECONDS = 90L
     }
 }
 

@@ -42,7 +42,6 @@ fun HomeRoute(
         onExercisesClick = onExercisesClick,
         onHistoryClick = onHistoryClick,
         onStartWorkoutClick = viewModel::onStartWorkout,
-        onStartTestRestClick = viewModel::onStartTestRest,
     )
 }
 
@@ -54,7 +53,6 @@ fun HomeScreen(
     onExercisesClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onStartWorkoutClick: () -> Unit,
-    onStartTestRestClick: () -> Unit,
 ) {
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Fitness") }) },
@@ -91,11 +89,6 @@ fun HomeScreen(
                 subtitle = "Past sessions and total volume",
                 onClick = onHistoryClick,
             )
-            HomeCard(
-                title = "Test rest timer (60s)",
-                subtitle = "Smoke-test the foreground service notification",
-                onClick = onStartTestRestClick,
-            )
         }
     }
 }
@@ -130,7 +123,6 @@ private fun HomeScreenPreview() {
             onExercisesClick = {},
             onHistoryClick = {},
             onStartWorkoutClick = {},
-            onStartTestRestClick = {},
         )
     }
 }

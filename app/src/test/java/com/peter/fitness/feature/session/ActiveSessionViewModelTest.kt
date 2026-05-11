@@ -6,6 +6,7 @@ import com.peter.fitness.domain.model.Exercise
 import com.peter.fitness.domain.model.ExerciseId
 import com.peter.fitness.domain.model.LoadType
 import com.peter.fitness.domain.model.MovementPattern
+import com.peter.fitness.domain.model.RestTimer
 import com.peter.fitness.domain.model.Session
 import com.peter.fitness.domain.model.SessionFocus
 import com.peter.fitness.domain.model.SessionId
@@ -14,9 +15,13 @@ import com.peter.fitness.domain.model.SetEntryId
 import com.peter.fitness.domain.model.SubjectiveLoad
 import com.peter.fitness.domain.model.TechniqueDemand
 import com.peter.fitness.domain.model.TechniqueRating
+import com.peter.fitness.domain.usecase.CancelRestTimerUseCase
 import com.peter.fitness.testsupport.FakeExerciseRepository
+import com.peter.fitness.testsupport.FakeRestTimerRepository
+import com.peter.fitness.testsupport.FakeRestTimerServiceController
 import com.peter.fitness.testsupport.FakeSessionRepository
 import com.peter.fitness.testsupport.MainDispatcherExtension
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -159,17 +164,59 @@ class ActiveSessionViewModelTest {
         sessionRepo.updateCount shouldBe 1
     }
 
+    @Test
+    fun `active rest timer from repository is surfaced in ui state`() = runTest(main.dispatcher) {
+        val active = RestTimer(startedAt = fixedInstant, durationSeconds = 90)
+        val restRepo = FakeRestTimerRepository(initial = active)
+        val vm = newViewModel(
+            FakeSessionRepository(initialSessions = listOf(seedSession)),
+            FakeExerciseRepository(),
+            sessionId = "session-1",
+            restRepo = restRepo,
+        )
+
+        advanceUntilIdle()
+
+        vm.uiState.value.activeRestTimer shouldBe active
+    }
+
+    @Test
+    fun `onCancelRestTimer clears repository and stops controller`() = runTest(main.dispatcher) {
+        val active = RestTimer(startedAt = fixedInstant, durationSeconds = 90)
+        val restRepo = FakeRestTimerRepository(initial = active)
+        val controller = FakeRestTimerServiceController()
+        val vm = newViewModel(
+            FakeSessionRepository(initialSessions = listOf(seedSession)),
+            FakeExerciseRepository(),
+            sessionId = "session-1",
+            restRepo = restRepo,
+            controller = controller,
+        )
+
+        advanceUntilIdle()
+        vm.onCancelRestTimer()
+        advanceUntilIdle()
+
+        restRepo.current().shouldBeNull()
+        controller.stopCount shouldBe 1
+        vm.uiState.value.activeRestTimer.shouldBeNull()
+    }
+
     private fun newViewModel(
         sessionRepo: FakeSessionRepository,
         exerciseRepo: FakeExerciseRepository,
         sessionId: String,
         clock: Clock = Clock.fixed(fixedInstant, ZoneOffset.UTC),
+        restRepo: FakeRestTimerRepository = FakeRestTimerRepository(),
+        controller: FakeRestTimerServiceController = FakeRestTimerServiceController(),
     ): ActiveSessionViewModel {
         val handle = SavedStateHandle(mapOf("sessionId" to sessionId))
         return ActiveSessionViewModel(
             savedStateHandle = handle,
             sessionRepository = sessionRepo,
             exerciseRepository = exerciseRepo,
+            restTimerRepository = restRepo,
+            cancelRestTimer = CancelRestTimerUseCase(restRepo, controller),
             clock = clock,
         )
     }

@@ -1,5 +1,6 @@
 package com.peter.fitness.feature.session
 
+import com.peter.fitness.domain.model.RestTimer
 import com.peter.fitness.domain.model.SessionFocus
 import java.time.Instant
 
@@ -13,6 +14,7 @@ data class ActiveSessionUiState(
     val sets: List<SetEntryUi> = emptyList(),
     val isFinishing: Boolean = false,
     val isFinished: Boolean = false,
+    val activeRestTimer: RestTimer? = null,
 )
 
 data class SetEntryUi(

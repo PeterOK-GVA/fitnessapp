@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.peter.fitness.domain.model.SessionId
 import com.peter.fitness.domain.repository.ExerciseRepository
+import com.peter.fitness.domain.repository.RestTimerRepository
 import com.peter.fitness.domain.repository.SessionRepository
+import com.peter.fitness.domain.usecase.CancelRestTimerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +22,8 @@ class ActiveSessionViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val sessionRepository: SessionRepository,
     private val exerciseRepository: ExerciseRepository,
+    private val restTimerRepository: RestTimerRepository,
+    private val cancelRestTimer: CancelRestTimerUseCase,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -49,6 +53,19 @@ class ActiveSessionViewModel @Inject constructor(
             }
             observeSets()
         }
+        observeRestTimer()
+    }
+
+    private fun observeRestTimer() {
+        viewModelScope.launch {
+            restTimerRepository.observeActive().collect { timer ->
+                _uiState.update { it.copy(activeRestTimer = timer) }
+            }
+        }
+    }
+
+    fun onCancelRestTimer() {
+        viewModelScope.launch { cancelRestTimer() }
     }
 
     private fun observeSets() {

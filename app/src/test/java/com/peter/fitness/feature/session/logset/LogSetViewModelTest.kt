@@ -18,8 +18,11 @@ import com.peter.fitness.domain.model.SetEntryId
 import com.peter.fitness.domain.model.SubjectiveLoad
 import com.peter.fitness.domain.model.TechniqueDemand
 import com.peter.fitness.domain.model.TechniqueRating
+import com.peter.fitness.domain.usecase.StartRestTimerUseCase
 import com.peter.fitness.testsupport.FakeEquipmentInventoryRepository
 import com.peter.fitness.testsupport.FakeExerciseRepository
+import com.peter.fitness.testsupport.FakeRestTimerRepository
+import com.peter.fitness.testsupport.FakeRestTimerServiceController
 import com.peter.fitness.testsupport.FakeSessionRepository
 import com.peter.fitness.testsupport.MainDispatcherExtension
 import io.kotest.matchers.nulls.shouldBeNull
@@ -349,6 +352,57 @@ class LogSetViewModelTest {
     }
 
     @Test
+    fun `onSaveAndRest persists set and starts a rest timer with the new set id`() = runTest(main.dispatcher) {
+        val sessionRepo = FakeSessionRepository(initialSessions = listOf(seedSession))
+        val restRepo = FakeRestTimerRepository()
+        val controller = FakeRestTimerServiceController()
+        val vm = newViewModel(
+            addModeSavedState(),
+            sessionRepo = sessionRepo,
+            restRepo = restRepo,
+            controller = controller,
+        )
+        advanceUntilIdle()
+
+        vm.onRepsChange("5")
+        vm.onLoadKgChange("80")
+        vm.onSaveAndRest()
+        advanceUntilIdle()
+
+        sessionRepo.observeSetEntries(sessionId).test {
+            awaitItem().size shouldBe 1
+            cancelAndIgnoreRemainingEvents()
+        }
+        val timer = restRepo.current()
+        timer.shouldNotBeNull()
+        timer.sessionId shouldBe sessionId
+        timer.setEntryId shouldBe SetEntryId("new-set-id")
+        controller.startCount shouldBe 1
+    }
+
+    @Test
+    fun `onSaveAndRest validates same as onSave and does not start timer on invalid input`() =
+        runTest(main.dispatcher) {
+            val restRepo = FakeRestTimerRepository()
+            val controller = FakeRestTimerServiceController()
+            val vm = newViewModel(
+                addModeSavedState(),
+                restRepo = restRepo,
+                controller = controller,
+            )
+            advanceUntilIdle()
+
+            vm.onRepsChange("0")
+            vm.onLoadKgChange("80")
+            vm.onSaveAndRest()
+            advanceUntilIdle()
+
+            vm.uiState.value.repsError.shouldNotBeNull()
+            restRepo.current().shouldBeNull()
+            controller.startCount shouldBe 0
+        }
+
+    @Test
     fun `edit mode hint is computed from prefilled load`() = runTest(main.dispatcher) {
         val existing = SetEntry(
             id = SetEntryId("set-1"),
@@ -406,6 +460,8 @@ class LogSetViewModelTest {
         exerciseRepo: FakeExerciseRepository = FakeExerciseRepository(initial = listOf(seedExercise)),
         equipmentRepo: FakeEquipmentInventoryRepository = FakeEquipmentInventoryRepository(defaultInventory()),
         idFactory: IdFactory = FixedIdFactory(SetEntryId("new-set-id")),
+        restRepo: FakeRestTimerRepository = FakeRestTimerRepository(),
+        controller: FakeRestTimerServiceController = FakeRestTimerServiceController(),
     ): LogSetViewModel = LogSetViewModel(
         savedStateHandle = savedStateHandle,
         sessionRepository = sessionRepo,
@@ -413,6 +469,11 @@ class LogSetViewModelTest {
         equipmentRepository = equipmentRepo,
         idFactory = idFactory,
         clock = Clock.fixed(now, ZoneOffset.UTC),
+        startRestTimer = StartRestTimerUseCase(
+            repository = restRepo,
+            controller = controller,
+            clock = Clock.fixed(now, ZoneOffset.UTC),
+        ),
     )
 
     private class FixedIdFactory(private val setEntryId: SetEntryId) : IdFactory {

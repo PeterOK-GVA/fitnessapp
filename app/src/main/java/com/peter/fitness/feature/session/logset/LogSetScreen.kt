@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,6 +63,7 @@ fun LogSetRoute(
         onSubjectiveLoadChange = viewModel::onSubjectiveLoadChange,
         onTechniqueRatingChange = viewModel::onTechniqueRatingChange,
         onSave = viewModel::onSave,
+        onSaveAndRest = viewModel::onSaveAndRest,
         onDelete = viewModel::onDelete,
     )
 }
@@ -76,6 +78,7 @@ fun LogSetScreen(
     onSubjectiveLoadChange: (SubjectiveLoad?) -> Unit,
     onTechniqueRatingChange: (TechniqueRating?) -> Unit,
     onSave: () -> Unit,
+    onSaveAndRest: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Scaffold(
@@ -155,12 +158,24 @@ fun LogSetScreen(
             )
 
             Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = onSave,
-                enabled = !state.isSaving && !state.isDeleting,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(if (state.isSaving) "Saving…" else "Save")
+                OutlinedButton(
+                    onClick = onSave,
+                    enabled = !state.isSaving && !state.isDeleting,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(if (state.isSaving) "Saving…" else "Save")
+                }
+                Button(
+                    onClick = onSaveAndRest,
+                    enabled = !state.isSaving && !state.isDeleting,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Save & rest")
+                }
             }
             if (state.isEditMode) {
                 OutlinedButton(
@@ -252,6 +267,7 @@ private fun LogSetScreenPreview() {
             onSubjectiveLoadChange = {},
             onTechniqueRatingChange = {},
             onSave = {},
+            onSaveAndRest = {},
             onDelete = {},
         )
     }
