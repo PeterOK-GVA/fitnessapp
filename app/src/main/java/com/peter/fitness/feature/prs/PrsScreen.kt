@@ -45,15 +45,20 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun PrsRoute(
     onBack: () -> Unit,
+    onExerciseClick: (ExerciseId) -> Unit,
     viewModel: PrsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    PrsScreen(state = state, onBack = onBack)
+    PrsScreen(state = state, onBack = onBack, onExerciseClick = onExerciseClick)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrsScreen(state: PrsUiState, onBack: () -> Unit) {
+fun PrsScreen(
+    state: PrsUiState,
+    onBack: () -> Unit,
+    onExerciseClick: (ExerciseId) -> Unit,
+) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -71,6 +76,7 @@ fun PrsScreen(state: PrsUiState, onBack: () -> Unit) {
             state.summaries.isEmpty() -> Empty(Modifier.padding(padding))
             else -> PrsList(
                 summaries = state.summaries,
+                onExerciseClick = onExerciseClick,
                 modifier = Modifier.padding(padding),
             )
         }
@@ -96,21 +102,29 @@ private fun Empty(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun PrsList(summaries: List<PrSummary>, modifier: Modifier = Modifier) {
+private fun PrsList(
+    summaries: List<PrSummary>,
+    onExerciseClick: (ExerciseId) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(summaries, key = { it.exerciseId.value }) { summary ->
-            SummaryCard(summary)
+            SummaryCard(summary, onClick = { onExerciseClick(summary.exerciseId) })
         }
     }
 }
 
 @Composable
-private fun SummaryCard(summary: PrSummary) {
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors()) {
+private fun SummaryCard(summary: PrSummary, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(),
+    ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -210,6 +224,7 @@ private fun PrsScreenPreview() {
                 ),
             ),
             onBack = {},
+            onExerciseClick = {},
         )
     }
 }

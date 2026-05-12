@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.peter.fitness.feature.calculator.PlateCalculatorRoute
 import com.peter.fitness.feature.equipment.EquipmentRoute
+import com.peter.fitness.feature.exercisedetail.ExerciseDetailRoute
 import com.peter.fitness.feature.exercises.ExerciseListRoute
 import com.peter.fitness.feature.exercises.ExercisePickerRoute
 import com.peter.fitness.feature.history.HistoryRoute
@@ -82,7 +83,15 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             SessionDetailRoute(onBack = { navController.popBackStack() })
         }
         composable<PrsDestination> {
-            PrsRoute(onBack = { navController.popBackStack() })
+            PrsRoute(
+                onBack = { navController.popBackStack() },
+                onExerciseClick = { exerciseId ->
+                    navController.navigate(ExerciseDetailDestination(exerciseId.value))
+                },
+            )
+        }
+        composable<ExerciseDetailDestination> {
+            ExerciseDetailRoute(onBack = { navController.popBackStack() })
         }
     }
 }
