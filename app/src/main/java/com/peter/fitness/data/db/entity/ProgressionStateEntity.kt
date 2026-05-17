@@ -15,5 +15,9 @@ data class ProgressionStateEntity(
     @ColumnInfo(name = "last_stimulus") val lastStimulus: String?,
     @ColumnInfo(name = "volume_streak") val volumeStreak: Int,
     @ColumnInfo(name = "consecutive_successes") val consecutiveSuccesses: Int,
+    @ColumnInfo(name = "deload_counter", defaultValue = "0") val deloadCounter: Int,
+    @ColumnInfo(name = "consecutive_misses", defaultValue = "0") val consecutiveMisses: Int,
+    @ColumnInfo(name = "consecutive_much_too_heavy", defaultValue = "0")
+    val consecutiveMuchTooHeavy: Int,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
 )

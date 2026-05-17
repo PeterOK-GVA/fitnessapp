@@ -4,10 +4,13 @@ import com.peter.fitness.domain.coach.CoachEngine
 import com.peter.fitness.domain.coach.CoachPolicy
 import com.peter.fitness.domain.coach.CoachProposal
 import com.peter.fitness.domain.coach.CompletedSet
+import com.peter.fitness.domain.coach.ExerciseClass
+import com.peter.fitness.domain.coach.ExerciseClassifier
 import com.peter.fitness.domain.model.ExerciseId
 import com.peter.fitness.domain.model.SessionId
 import com.peter.fitness.domain.model.SetEntry
 import com.peter.fitness.domain.repository.EquipmentInventoryRepository
+import com.peter.fitness.domain.repository.ExerciseRepository
 import com.peter.fitness.domain.repository.ProgressionStateRepository
 import com.peter.fitness.domain.repository.SessionRepository
 import kotlinx.coroutines.flow.first
@@ -26,6 +29,7 @@ import javax.inject.Inject
 class ProposeNextSetUseCase @Inject constructor(
     private val progressionStateRepository: ProgressionStateRepository,
     private val sessionRepository: SessionRepository,
+    private val exerciseRepository: ExerciseRepository,
     private val equipmentRepository: EquipmentInventoryRepository,
 ) {
     suspend operator fun invoke(
@@ -35,8 +39,11 @@ class ProposeNextSetUseCase @Inject constructor(
     ): CoachProposal? {
         val state = progressionStateRepository.find(exerciseId) ?: return null
         val inventory = equipmentRepository.current()
+        val exerciseClass = exerciseRepository.findById(exerciseId)?.let {
+            ExerciseClassifier.classify(it.movementPattern, it.loadType)
+        } ?: ExerciseClass.ACCESSORY
         val lastResults = lastResultsFor(exerciseId, currentSessionId)
-        val decision = CoachEngine.decideNext(state, lastResults, policy, inventory)
+        val decision = CoachEngine.decideNext(state, lastResults, exerciseClass, policy, inventory)
         return CoachProposal(
             prescription = decision.prescription,
             rationale = decision.rationale,

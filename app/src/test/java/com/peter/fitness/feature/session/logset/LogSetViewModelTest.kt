@@ -633,6 +633,7 @@ class LogSetViewModelTest {
         proposeNextSet = ProposeNextSetUseCase(
             progressionStateRepository = progressionRepo,
             sessionRepository = sessionRepo,
+            exerciseRepository = exerciseRepo,
             equipmentRepository = equipmentRepo,
         ),
         idFactory = idFactory,

@@ -6,4 +6,5 @@ data class CoachDecision(
     val stimulusChanged: Stimulus?,
     val gate: SetCompletion,
     val rationale: String,
+    val deloaded: Boolean = false,
 )

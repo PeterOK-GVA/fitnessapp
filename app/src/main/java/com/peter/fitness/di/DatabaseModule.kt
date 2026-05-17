@@ -10,6 +10,7 @@ import com.peter.fitness.data.db.dao.RestTimerDao
 import com.peter.fitness.data.db.dao.SessionDao
 import com.peter.fitness.data.db.migrations.MIGRATION_1_2
 import com.peter.fitness.data.db.migrations.MIGRATION_2_3
+import com.peter.fitness.data.db.migrations.MIGRATION_3_4
 import com.peter.fitness.data.db.seed.BarbellSeedCallback
 import dagger.Module
 import dagger.Provides
@@ -27,7 +28,7 @@ object DatabaseModule {
     fun provideFitnessDatabase(@ApplicationContext context: Context): FitnessDatabase =
         Room.databaseBuilder(context, FitnessDatabase::class.java, FitnessDatabase.NAME)
             .addCallback(BarbellSeedCallback)
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
 
     @Provides

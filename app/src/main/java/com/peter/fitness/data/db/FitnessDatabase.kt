@@ -25,7 +25,7 @@ import com.peter.fitness.data.db.entity.SetEntryEntity
         ActiveRestTimerEntity::class,
         ProgressionStateEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class FitnessDatabase : RoomDatabase() {

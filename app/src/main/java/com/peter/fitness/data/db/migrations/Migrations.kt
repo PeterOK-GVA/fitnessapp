@@ -39,3 +39,18 @@ val MIGRATION_2_3: Migration = object : Migration(2, 3) {
         )
     }
 }
+
+val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE progression_state ADD COLUMN deload_counter INTEGER NOT NULL DEFAULT 0",
+        )
+        db.execSQL(
+            "ALTER TABLE progression_state ADD COLUMN consecutive_misses INTEGER NOT NULL DEFAULT 0",
+        )
+        db.execSQL(
+            "ALTER TABLE progression_state " +
+                "ADD COLUMN consecutive_much_too_heavy INTEGER NOT NULL DEFAULT 0",
+        )
+    }
+}

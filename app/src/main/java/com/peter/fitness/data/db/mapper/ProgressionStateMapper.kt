@@ -14,6 +14,9 @@ fun ProgressionStateEntity.toDomain(): ProgressionState = ProgressionState(
     lastStimulus = lastStimulus?.let(Stimulus::valueOf),
     volumeStreak = volumeStreak,
     consecutiveSuccesses = consecutiveSuccesses,
+    deloadCounter = deloadCounter,
+    consecutiveMisses = consecutiveMisses,
+    consecutiveMuchTooHeavy = consecutiveMuchTooHeavy,
 )
 
 fun ProgressionState.toEntity(exerciseId: ExerciseId, updatedAt: Instant): ProgressionStateEntity =
@@ -26,5 +29,8 @@ fun ProgressionState.toEntity(exerciseId: ExerciseId, updatedAt: Instant): Progr
         lastStimulus = lastStimulus?.name,
         volumeStreak = volumeStreak,
         consecutiveSuccesses = consecutiveSuccesses,
+        deloadCounter = deloadCounter,
+        consecutiveMisses = consecutiveMisses,
+        consecutiveMuchTooHeavy = consecutiveMuchTooHeavy,
         updatedAt = updatedAt.toEpochMilli(),
     )

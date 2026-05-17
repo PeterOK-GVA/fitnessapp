@@ -2,8 +2,12 @@ package com.peter.fitness.domain.usecase
 
 import com.peter.fitness.domain.coach.ProgressionState
 import com.peter.fitness.domain.coach.Stimulus
+import com.peter.fitness.domain.model.ConditioningSuitability
 import com.peter.fitness.domain.model.EquipmentInventory
+import com.peter.fitness.domain.model.Exercise
 import com.peter.fitness.domain.model.ExerciseId
+import com.peter.fitness.domain.model.LoadType
+import com.peter.fitness.domain.model.MovementPattern
 import com.peter.fitness.domain.model.PlatePair
 import com.peter.fitness.domain.model.Session
 import com.peter.fitness.domain.model.SessionFocus
@@ -11,8 +15,10 @@ import com.peter.fitness.domain.model.SessionId
 import com.peter.fitness.domain.model.SetEntry
 import com.peter.fitness.domain.model.SetEntryId
 import com.peter.fitness.domain.model.SubjectiveLoad
+import com.peter.fitness.domain.model.TechniqueDemand
 import com.peter.fitness.domain.model.TechniqueRating
 import com.peter.fitness.testsupport.FakeEquipmentInventoryRepository
+import com.peter.fitness.testsupport.FakeExerciseRepository
 import com.peter.fitness.testsupport.FakeProgressionStateRepository
 import com.peter.fitness.testsupport.FakeSessionRepository
 import com.peter.fitness.testsupport.MainDispatcherExtension
@@ -81,12 +87,23 @@ class ProposeNextSetUseCaseTest {
         createdAt = Instant.EPOCH,
     )
 
+    private val backSquat = Exercise(
+        id = exerciseId,
+        name = "Back Squat",
+        movementPattern = MovementPattern.SQUAT,
+        loadType = LoadType.BARBELL,
+        techniqueDemand = TechniqueDemand.HIGH,
+        conditioningSuitability = ConditioningSuitability.LIMITED,
+        createdAt = Instant.EPOCH,
+    )
+
     private fun useCase(
         progression: FakeProgressionStateRepository,
         sessions: FakeSessionRepository,
     ) = ProposeNextSetUseCase(
         progressionStateRepository = progression,
         sessionRepository = sessions,
+        exerciseRepository = FakeExerciseRepository(initial = listOf(backSquat)),
         equipmentRepository = FakeEquipmentInventoryRepository(inventory),
     )
 

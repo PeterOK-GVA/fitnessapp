@@ -56,7 +56,13 @@ class SteadyEddieTest {
                     )
                 }
             }
-            val decision = CoachEngine.decideNext(state, results, CoachPolicy.DEFAULT, inventory)
+            val decision = CoachEngine.decideNext(
+                state,
+                results,
+                ExerciseClass.LOWER_COMPOUND,
+                CoachPolicy.DEFAULT,
+                inventory,
+            )
             trail += "${decision.prescription.targetReps}x${formatKg(decision.prescription.targetLoadKg)}"
             state = decision.newState
         }
@@ -66,10 +72,10 @@ class SteadyEddieTest {
             "6x60",
             "7x60",
             "8x60",
-            "5x62.5",
-            "6x62.5",
-            "7x62.5",
-            "8x62.5",
+            "5x65",
+            "6x65",
+            "7x65",
+            "8x65",
         )
     }
 
