@@ -18,6 +18,7 @@ data class LogSetUiState(
     val isSaving: Boolean = false,
     val isDeleting: Boolean = false,
     val plateHint: PlateHintUi? = null,
+    val coachRationale: String? = null,
 )
 
 data class PlateHintUi(

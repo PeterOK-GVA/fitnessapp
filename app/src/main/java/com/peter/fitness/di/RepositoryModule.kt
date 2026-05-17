@@ -2,10 +2,12 @@ package com.peter.fitness.di
 
 import com.peter.fitness.data.repository.RoomEquipmentInventoryRepository
 import com.peter.fitness.data.repository.RoomExerciseRepository
+import com.peter.fitness.data.repository.RoomProgressionStateRepository
 import com.peter.fitness.data.repository.RoomRestTimerRepository
 import com.peter.fitness.data.repository.RoomSessionRepository
 import com.peter.fitness.domain.repository.EquipmentInventoryRepository
 import com.peter.fitness.domain.repository.ExerciseRepository
+import com.peter.fitness.domain.repository.ProgressionStateRepository
 import com.peter.fitness.domain.repository.RestTimerRepository
 import com.peter.fitness.domain.repository.SessionRepository
 import dagger.Binds
@@ -33,4 +35,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRestTimerRepository(impl: RoomRestTimerRepository): RestTimerRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProgressionStateRepository(
+        impl: RoomProgressionStateRepository,
+    ): ProgressionStateRepository
 }

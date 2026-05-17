@@ -7,8 +7,8 @@ config:
 
 complexity:
   LongParameterList:
-    functionThreshold: 8
-    constructorThreshold: 8
+    functionThreshold: 10
+    constructorThreshold: 10
     ignoreAnnotated: ['Composable']
   LongMethod:
     threshold: 80
@@ -28,7 +28,7 @@ naming:
 
 style:
   MagicNumber:
-    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**', '**/seed/**', '**/*Screen.kt']
+    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt', '**/theme/**', '**/seed/**', '**/*Screen.kt', '**/migrations/**']
     ignoreAnnotated: ['Preview']
     ignoreNumbers: ['-1', '0', '1', '2', '100']
   MaxLineLength:

@@ -109,6 +109,14 @@ fun LogSetScreen(
         ) {
             Text(state.exerciseName, style = MaterialTheme.typography.headlineSmall)
 
+            state.coachRationale?.let { rationale ->
+                Text(
+                    text = "Coach: $rationale",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
             OutlinedTextField(
                 value = state.reps,
                 onValueChange = onRepsChange,

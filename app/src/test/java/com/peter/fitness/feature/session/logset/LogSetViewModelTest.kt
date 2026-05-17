@@ -3,6 +3,7 @@ package com.peter.fitness.feature.session.logset
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.peter.fitness.core.ids.IdFactory
+import com.peter.fitness.domain.coach.ProgressionState
 import com.peter.fitness.domain.model.ConditioningSuitability
 import com.peter.fitness.domain.model.EquipmentInventory
 import com.peter.fitness.domain.model.Exercise
@@ -18,9 +19,11 @@ import com.peter.fitness.domain.model.SetEntryId
 import com.peter.fitness.domain.model.SubjectiveLoad
 import com.peter.fitness.domain.model.TechniqueDemand
 import com.peter.fitness.domain.model.TechniqueRating
+import com.peter.fitness.domain.usecase.ProposeNextSetUseCase
 import com.peter.fitness.domain.usecase.StartRestTimerUseCase
 import com.peter.fitness.testsupport.FakeEquipmentInventoryRepository
 import com.peter.fitness.testsupport.FakeExerciseRepository
+import com.peter.fitness.testsupport.FakeProgressionStateRepository
 import com.peter.fitness.testsupport.FakeRestTimerAlarmScheduler
 import com.peter.fitness.testsupport.FakeRestTimerRepository
 import com.peter.fitness.testsupport.FakeRestTimerServiceController
@@ -297,6 +300,163 @@ class LogSetViewModelTest {
     }
 
     @Test
+    fun `add mode with no progression state shows no coach rationale and bootstraps on save`() =
+        runTest(main.dispatcher) {
+            val sessionRepo = FakeSessionRepository(initialSessions = listOf(seedSession))
+            val progressionRepo = FakeProgressionStateRepository()
+            val vm = newViewModel(
+                addModeSavedState(),
+                sessionRepo = sessionRepo,
+                progressionRepo = progressionRepo,
+            )
+            advanceUntilIdle()
+
+            vm.uiState.value.coachRationale.shouldBeNull()
+
+            vm.onRepsChange("5")
+            vm.onLoadKgChange("80")
+            vm.onSave()
+            advanceUntilIdle()
+
+            val bootstrapped = progressionRepo.find(exerciseId)
+            bootstrapped.shouldNotBeNull()
+            bootstrapped.currentLoadKg shouldBe 80.0
+            bootstrapped.currentTargetReps shouldBe 5
+        }
+
+    @Test
+    fun `add mode with existing state pre-fills the coach proposal and shows the rationale`() =
+        runTest(main.dispatcher) {
+            val progressionRepo = FakeProgressionStateRepository(
+                mapOf(
+                    exerciseId to ProgressionState(
+                        currentLoadKg = 80.0,
+                        currentTargetReps = 5,
+                        workingRangeMinReps = 5,
+                        workingRangeMaxReps = 8,
+                    ),
+                ),
+            )
+            val sessionRepo = FakeSessionRepository(initialSessions = listOf(seedSession))
+            val vm = newViewModel(
+                addModeSavedState(),
+                sessionRepo = sessionRepo,
+                progressionRepo = progressionRepo,
+            )
+            advanceUntilIdle()
+
+            // No prior session → engine keeps current prescription as the proposal.
+            vm.uiState.value.reps shouldBe "5"
+            vm.uiState.value.loadKg shouldBe "80"
+            vm.uiState.value.coachRationale.shouldNotBeNull()
+        }
+
+    @Test
+    fun `coach proposal is skipped when the exercise is already logged this session`() =
+        runTest(main.dispatcher) {
+            val alreadyLogged = SetEntry(
+                id = SetEntryId("already"),
+                sessionId = sessionId,
+                exerciseId = exerciseId,
+                ordinal = 0,
+                targetReps = 5,
+                targetLoadKg = 80.0,
+                completedReps = 5,
+                performedLoadKg = 80.0,
+                subjectiveLoad = SubjectiveLoad.OK,
+                techniqueRating = TechniqueRating.GOOD,
+                createdAt = now,
+            )
+            val sessionRepo = FakeSessionRepository(
+                initialSessions = listOf(seedSession),
+                initialSets = listOf(alreadyLogged),
+            )
+            val progressionRepo = FakeProgressionStateRepository(
+                mapOf(
+                    exerciseId to ProgressionState(
+                        currentLoadKg = 80.0,
+                        currentTargetReps = 5,
+                        workingRangeMinReps = 5,
+                        workingRangeMaxReps = 8,
+                    ),
+                ),
+            )
+            val vm = newViewModel(
+                addModeSavedState(),
+                sessionRepo = sessionRepo,
+                progressionRepo = progressionRepo,
+            )
+            advanceUntilIdle()
+
+            vm.uiState.value.coachRationale.shouldBeNull()
+            vm.uiState.value.reps shouldBe ""
+
+            // Saving the second set must NOT re-persist progression state.
+            val upsertsBefore = progressionRepo.upsertCount
+            vm.onRepsChange("5")
+            vm.onLoadKgChange("80")
+            vm.onSave()
+            advanceUntilIdle()
+            progressionRepo.upsertCount shouldBe upsertsBefore
+        }
+
+    @Test
+    fun `accepting the coach proposal persists the engine's next state`() = runTest(main.dispatcher) {
+        val progressionRepo = FakeProgressionStateRepository(
+            mapOf(
+                exerciseId to ProgressionState(
+                    currentLoadKg = 80.0,
+                    currentTargetReps = 5,
+                    workingRangeMinReps = 5,
+                    workingRangeMaxReps = 8,
+                ),
+            ),
+        )
+        val previous = Session(
+            id = SessionId("prev"),
+            startedAt = now.minusSeconds(86_400),
+            endedAt = now.minusSeconds(80_000),
+            focus = SessionFocus.FREE_LOG,
+            notes = null,
+        )
+        val priorSets = List(3) { i ->
+            SetEntry(
+                id = SetEntryId("prev-$i"),
+                sessionId = SessionId("prev"),
+                exerciseId = exerciseId,
+                ordinal = i,
+                targetReps = 5,
+                targetLoadKg = 80.0,
+                completedReps = 5,
+                performedLoadKg = 80.0,
+                subjectiveLoad = SubjectiveLoad.OK,
+                techniqueRating = TechniqueRating.GOOD,
+                createdAt = now.minusSeconds(82_000),
+            )
+        }
+        val sessionRepo = FakeSessionRepository(
+            initialSessions = listOf(previous, seedSession),
+            initialSets = priorSets,
+        )
+        val vm = newViewModel(
+            addModeSavedState(),
+            sessionRepo = sessionRepo,
+            progressionRepo = progressionRepo,
+        )
+        advanceUntilIdle()
+
+        // Proposal from prev (OK 5x80 below ceiling) → volume bump to 6 reps.
+        vm.uiState.value.reps shouldBe "6"
+
+        vm.onSave()
+        advanceUntilIdle()
+
+        val persisted = progressionRepo.find(exerciseId)
+        persisted.shouldNotBeNull()
+        persisted.currentTargetReps shouldBe 6
+    }
+
+    @Test
     fun `valid load surfaces an on-target plate hint`() = runTest(main.dispatcher) {
         val vm = newViewModel(addModeSavedState())
         advanceUntilIdle()
@@ -460,6 +620,7 @@ class LogSetViewModelTest {
         sessionRepo: FakeSessionRepository = FakeSessionRepository(initialSessions = listOf(seedSession)),
         exerciseRepo: FakeExerciseRepository = FakeExerciseRepository(initial = listOf(seedExercise)),
         equipmentRepo: FakeEquipmentInventoryRepository = FakeEquipmentInventoryRepository(defaultInventory()),
+        progressionRepo: FakeProgressionStateRepository = FakeProgressionStateRepository(),
         idFactory: IdFactory = FixedIdFactory(SetEntryId("new-set-id")),
         restRepo: FakeRestTimerRepository = FakeRestTimerRepository(),
         controller: FakeRestTimerServiceController = FakeRestTimerServiceController(),
@@ -468,6 +629,12 @@ class LogSetViewModelTest {
         sessionRepository = sessionRepo,
         exerciseRepository = exerciseRepo,
         equipmentRepository = equipmentRepo,
+        progressionStateRepository = progressionRepo,
+        proposeNextSet = ProposeNextSetUseCase(
+            progressionStateRepository = progressionRepo,
+            sessionRepository = sessionRepo,
+            equipmentRepository = equipmentRepo,
+        ),
         idFactory = idFactory,
         clock = Clock.fixed(now, ZoneOffset.UTC),
         startRestTimer = StartRestTimerUseCase(

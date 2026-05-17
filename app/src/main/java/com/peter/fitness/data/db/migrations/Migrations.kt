@@ -19,3 +19,23 @@ val MIGRATION_1_2: Migration = object : Migration(1, 2) {
         )
     }
 }
+
+val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS progression_state (
+                exercise_id TEXT NOT NULL PRIMARY KEY,
+                current_load_kg REAL NOT NULL,
+                current_target_reps INTEGER NOT NULL,
+                working_range_min_reps INTEGER NOT NULL,
+                working_range_max_reps INTEGER NOT NULL,
+                last_stimulus TEXT,
+                volume_streak INTEGER NOT NULL,
+                consecutive_successes INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+            """.trimIndent(),
+        )
+    }
+}

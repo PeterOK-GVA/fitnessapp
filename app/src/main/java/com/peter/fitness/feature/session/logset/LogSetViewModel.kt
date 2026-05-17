@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.peter.fitness.core.ids.IdFactory
+import com.peter.fitness.domain.coach.ProgressionState
 import com.peter.fitness.domain.model.EquipmentInventory
 import com.peter.fitness.domain.model.ExerciseId
 import com.peter.fitness.domain.model.SessionId
@@ -14,7 +15,9 @@ import com.peter.fitness.domain.model.TechniqueRating
 import com.peter.fitness.domain.plates.PlateCalculator
 import com.peter.fitness.domain.repository.EquipmentInventoryRepository
 import com.peter.fitness.domain.repository.ExerciseRepository
+import com.peter.fitness.domain.repository.ProgressionStateRepository
 import com.peter.fitness.domain.repository.SessionRepository
+import com.peter.fitness.domain.usecase.ProposeNextSetUseCase
 import com.peter.fitness.domain.usecase.StartRestTimerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -36,6 +39,8 @@ class LogSetViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val exerciseRepository: ExerciseRepository,
     private val equipmentRepository: EquipmentInventoryRepository,
+    private val progressionStateRepository: ProgressionStateRepository,
+    private val proposeNextSet: ProposeNextSetUseCase,
     private val idFactory: IdFactory,
     private val clock: Clock,
     private val startRestTimer: StartRestTimerUseCase,
@@ -52,6 +57,12 @@ class LogSetViewModel @Inject constructor(
         savedStateHandle.get<String>(KEY_SET_ENTRY_ID)?.let(::SetEntryId)
 
     private var currentInventory: EquipmentInventory? = null
+
+    /**
+     * The progression state to persist when the athlete saves a Coach-proposed set. Set only on the
+     * first set of an exercise within a session, so logging extra sets doesn't drift the state.
+     */
+    private var pendingCoachState: ProgressionState? = null
 
     private val _uiState = MutableStateFlow(
         LogSetUiState(isEditMode = setEntryIdArg != null),
@@ -93,14 +104,34 @@ class LogSetViewModel @Inject constructor(
                 "exerciseId is required when setEntryId is absent"
             }
             val name = exerciseRepository.findById(exId)?.name ?: "Exercise"
+            val proposal = maybeProposeFor(exId)
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     exerciseId = exId.value,
                     exerciseName = name,
+                    reps = proposal?.prescription?.targetReps?.toString() ?: it.reps,
+                    loadKg = proposal?.prescription?.targetLoadKg?.toCleanString() ?: it.loadKg,
+                    coachRationale = proposal?.rationale,
+                    plateHint = proposal?.let { p ->
+                        computePlateHint(p.prescription.targetLoadKg.toCleanString(), currentInventory)
+                    },
                 )
             }
         }
+    }
+
+    /**
+     * Returns the Coach's proposal for [exId], but only when this is the first set of that exercise
+     * in the current session — adding further sets must not re-decide or drift the persisted state.
+     */
+    private suspend fun maybeProposeFor(exId: ExerciseId): com.peter.fitness.domain.coach.CoachProposal? {
+        val alreadyLoggedThisSession = sessionRepository.observeSetEntries(sessionId).first()
+            .any { it.exerciseId == exId }
+        if (alreadyLoggedThisSession) return null
+        val proposal = proposeNextSet(exerciseId = exId, currentSessionId = sessionId) ?: return null
+        pendingCoachState = proposal.newState
+        return proposal
     }
 
     fun onRepsChange(value: String) {
@@ -145,7 +176,9 @@ class LogSetViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, repsError = null, loadKgError = null) }
             val savedSetEntryId: SetEntryId = if (setEntryIdArg == null) {
-                addNewSet(parsed.reps, parsed.loadKg, state.subjectiveLoad, state.techniqueRating)
+                val id = addNewSet(parsed.reps, parsed.loadKg, state.subjectiveLoad, state.techniqueRating)
+                persistCoachState(parsed.reps, parsed.loadKg)
+                id
             } else {
                 updateExistingSet(parsed.reps, parsed.loadKg, state.subjectiveLoad, state.techniqueRating)
                 setEntryIdArg
@@ -195,6 +228,33 @@ class LogSetViewModel @Inject constructor(
         )
         sessionRepository.addSetEntry(entry)
         return newId
+    }
+
+    /**
+     * After the first Coach-proposed set of an exercise in a session, persist the engine's next
+     * state. If there was no prior progression state at all, bootstrap one from what the athlete
+     * actually did so the Coach has a baseline next time.
+     */
+    private suspend fun persistCoachState(reps: Int, loadKg: Double) {
+        val exId = ExerciseId(_uiState.value.exerciseId)
+        val coachState = pendingCoachState
+        if (coachState != null) {
+            progressionStateRepository.upsert(exId, coachState)
+            pendingCoachState = null
+            return
+        }
+        if (progressionStateRepository.find(exId) == null) {
+            val clampedReps = reps.coerceIn(DEFAULT_MIN_REPS, DEFAULT_MAX_REPS)
+            progressionStateRepository.upsert(
+                exId,
+                ProgressionState(
+                    currentLoadKg = loadKg,
+                    currentTargetReps = clampedReps,
+                    workingRangeMinReps = DEFAULT_MIN_REPS,
+                    workingRangeMaxReps = DEFAULT_MAX_REPS,
+                ),
+            )
+        }
     }
 
     private suspend fun updateExistingSet(
@@ -268,6 +328,8 @@ class LogSetViewModel @Inject constructor(
         const val KEY_SET_ENTRY_ID = "setEntryId"
         const val ON_TARGET_TOLERANCE_KG = 0.01
         const val DEFAULT_REST_SECONDS = 90L
+        const val DEFAULT_MIN_REPS = 5
+        const val DEFAULT_MAX_REPS = 8
     }
 }
 
